@@ -1,102 +1,246 @@
 <!doctype html>
 <html>
-  <meta charset="utf-8">
-  <head>
+<meta charset="utf-8">
+
+<head>
     <title>Cylon.js Robot Events and Commands</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
+        .container { position: relative; } 
+        .cam_button { position: absolute; left: 0; width: 75px; text-align: center; font-size: 20px; }
+        
+        * { position: relative; } 
+        body { font: 13px Helvetica, Arial; } 
+        form { padding: 3px; bottom: 0; width: 100%; } 
+        form input { border: 1; padding: 10px; width: 100px; }  
+        form button { width: 100px; background: rgb(130, 224, 255); border: none; padding: 10px; } 
+        #cam_control { float: right; width: 20%; padding: 3px; } 
+            #cam_left { left: 10px; top: 70px; }
+            #cam_right { left: 100px; top: 70px; }
+            #cam_up { left: 55px; top: 10px; }
+            #cam_down { left: 55px; top: 130px; }
+            #cam_control_textinput { left: 10px; top: 200px; }
+                #cam_hor { left: 20%; width: 25px; }
+                #cam_ver { left: 20%; width: 25px; }
+        #debug_console { position: absolute; width: 80%; background: #0f0 } 
+        #messages { list-style-type: none; margin: 0; padding: 0; } 
+        #messages li { padding: 5px 10px; } 
+        #messages li:nth-child(odd) { background: #eee; }
     </style>
-  </head>
-  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-  <script type="text/javascript">
+</head>
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript">
     var cylon, robot, device;
-    window.onload = function() {
-      // Connect to the main api socket
-      cylon = io('http://192.168.1.5:3000/api');
-      console.log('Setting up socket connections:');
-      // On connection the 'robots' event is emitted
-      // and returns a list of available robots.
-      cylon.on('robots', function(robots) {
-        if (!robot) {
-          console.log('List of robots:', robots);
-          // Once we have a list of available robots we can use
-          // any of them and connect to their socket.
-          robot = io('http://192.168.1.5:3000/api/robots/' + robots[0]);
-          // Listen to the 'message' event on device
-          robot.on('loopback', function(msg) {
-            $('#messages').append($('<li>').text(msg));
-          });
-          // Listen to the 'commands' event on device
-          // returns a list of available commands for the device
-          robot.on('commands', function(commands) {
-            var msg = 'Robot commands:' + commands.toString();
-            console.log('Robot commands ==>');
-            console.log(commands);
-            $('#messages').append($('<li>').text(msg));
-          });
-          // Every time a commands is executed the 'command' event
-          // is triggered, returns the name of the command executed
-          // and the value returned
-          robot.on('command', function(payload) {
-            console.log('Robot command name ==>', payload.name);
-            console.log('Robot command data ==>', payload.data);
-          });
-          // Listen to the 'events' event on device
-          // returns a list of available events for the device
-          robot.on('events', function(events) {
-            var msg = 'events:' + events.toString();
-            console.log('Robot events ==>');
-            console.log(events);
-            $('#messages').append($('<li>').text(msg));
-          });
-          // Listen for robot specific events,
-          // this must be declared when defining a robot in
-          // cylon, check examples/robot/events.js for more
-          // details on how to setup robot listeners in the API.
-          robot.on('turned_on', function(payload){
-            console.log('data:', payload.data);
-            console.log('TURNED_ON!!!');
-          });
-          robot.on('turned_off', function(payload){
-            console.log('data:', payload.data);
-            console.log('TURNED_OFF!!!');
-          });
-          // The "hello world" program of robotics, the
-          // blink and LED program, we just emit the command
-          // we want our robot to execute.
-          //setInterval(function() {
-          //  robot.emit('toggle');
-          //}, 2000);
-          // We emit 'commands' and 'events' so we can listen
-          // and get the lists of available items
-          robot.emit('commands');
-          robot.emit('events');
-          msg = 'You have been subscribed to Cylon sockets:' + robot.nsp;
-          $('#messages').append($('<li>').text(msg));
+    
+    var cam_turnSpeed = 1;
+    var cam_x = 50; 
+    var cam_y = 50;
+    var cam_dir = { x: 0, y: 0 };
+
+    console.log( "init" );
+    function turnCamera() {
+        try {
+            //console.log("turnCamera");
+            //$('#messages').append($('<li>').text("turnCamera"));
+            cam_x += cam_dir['x'];
+            cam_y += cam_dir['y'];
+            
+            if( cam_x > 100 ) { cam_x = 100; }
+            if( cam_x < 0 ) { cam_x = 0; }
+            if( cam_y > 100 ) { cam_y = 100; }
+            if( cam_y < 0 ) { cam_y = 0; }
+            
+            $('#cam_hor').val(cam_x);
+            $('#cam_ver').val(cam_y);
         }
-      });
-      // Send the api a 'robots' to receive the list of robots
-      // and trigger the listener we defined above.
-      cylon.emit('robots');
-      $('form').submit(function(){
-        robot.emit($('#m').val(), 'some data');
-        $('#m').val('');
-        return false;
-      });
+        catch (err) {
+            console.log(err);
+        }
     };
-  </script>
-  <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
-  </body>
+
+    window.onload = function() {
+
+        $('#messages').append($('<li>').text('Starting up...'));
+        $('#cam_hor').val(cam_x);
+        $('#cam_ver').val(cam_y);
+        
+
+        var interval = 100;
+        var tid = setInterval(turnCamera, interval);
+        
+        /*
+        if (tid != 0) {
+            clearInterval(tid);
+            tid = 0;
+        }
+        */
+
+        // Connect to the main api socket
+        cylon = io('http://192.168.1.5:3000/api');
+        console.log('Setting up socket connections:');
+
+        // Send the api a 'robots' to receive the list of robots
+        // and trigger the listener we defined above.
+        cylon.emit('robots');
+
+        // On connection the 'robots' event is emitted
+        // and returns a list of available robots.
+        cylon.on('robots', function(robots) {
+            if (!robot) {
+                console.log('List of robots:', robots);
+
+                for (var robot in robots) {
+                    $('#messages').append($('<li>').text(robots[robot]));
+                }
+
+                // Once we have a list of available robots we can use
+                // any of them and connect to their socket.
+                robot = io('http://192.168.1.5:3000/api/robots/' + robots[0]);
+
+                // Listen to the 'message' event on device
+                robot.on('loopback', function(msg) {
+                    $('#messages').append($('<li>').text(msg));
+                });
+
+                // Listen to the 'commands' event on device
+                // returns a list of available commands for the device
+                robot.on('commands', function(commands) {
+                    var msg = 'Robot commands:' + commands.toString();
+                    console.log('Robot commands ==>');
+                    console.log(commands);
+                    $('#messages').append($('<li>').text(msg));
+                });
+
+                // Every time a commands is executed the 'command' event
+                // is triggered, returns the name of the command executed
+                // and the value returned
+                robot.on('command', function(payload) {
+                    console.log('Robot command name ==>', payload.name);
+                    console.log('Robot command data ==>', payload.data);
+                });
+
+                // Listen to the 'events' event on device
+                // returns a list of available events for the device
+                robot.on('events', function(events) {
+                    var msg = 'events:' + events.toString();
+                    console.log('Robot events ==>');
+                    console.log(events);
+                    $('#messages').append($('<li>').text(msg));
+                });
+
+                // Listen for robot specific events,
+                // this must be declared when defining a robot in
+                // cylon, check examples/robot/events.js for more
+                // details on how to setup robot listeners in the API.
+                robot.on('turned_on', function(payload) {
+                    console.log('data:', payload.data);
+                    console.log('TURNED_ON!!!');
+                });
+
+                robot.on('turned_off', function(payload) {
+                    console.log('data:', payload.data);
+                    console.log('TURNED_OFF!!!');
+                });
+
+                // The "hello world" program of robotics, the
+                // blink and LED program, we just emit the command
+                // we want our robot to execute.
+                //setInterval(function() {
+                //  robot.emit('toggle');
+                //}, 2000);
+                // We emit 'commands' and 'events' so we can listen
+                // and get the lists of available items
+                robot.emit('commands');
+                robot.emit('events');
+                msg = 'You have been subscribed to Cylon sockets:' + robot.nsp;
+                $('#messages').append($('<li>').text(msg));
+            }
+        });
+
+        $('#debug_console_form').submit(function() {
+            try {
+                var input = $('#m').val();
+                console.log(input);
+                $('#messages').append($('<li>').text(input));
+
+                if (robot) {
+                    robot.emit(input, 'some data');
+                }
+
+                $('#m').val('');
+            }
+            catch (err) {
+                console.log(err);
+            }
+
+            return false;
+        });
+
+        // Cam buttons
+        $('#cam_left').mousedown(function() {
+            cam_dir['x'] = -cam_turnSpeed;
+        });
+
+        $('#cam_left').mouseup(function() {
+            cam_dir['x'] = 0;
+        });
+        
+        $('#cam_right').mousedown(function() {
+            cam_dir['x'] = cam_turnSpeed;
+        });
+
+        $('#cam_right').mouseup(function() {
+            cam_dir['x'] = 0;
+        });
+        
+        $('#cam_up').mousedown(function() {
+            cam_dir['y'] = -cam_turnSpeed;
+        });
+
+        $('#cam_up').mouseup(function() {
+            cam_dir['y'] = 0;
+        });
+        
+        $('#cam_down').mousedown(function() {
+            cam_dir['y'] = cam_turnSpeed;
+        });
+
+        $('#cam_down').mouseup(function() {
+            cam_dir['y'] = 0;
+        });
+
+    };
+</script>
+
+<body>
+    First!
+    <img src="http://192.168.1.5:8080/?action=stream"/>
+    <div id="cam_control" class="container">
+        <button id="cam_left" class="cam_button">Left</button>
+        <button id="cam_right" class="cam_button">Right</button>
+        <button id="cam_up" class="cam_button">Up</button>
+        <button id="cam_down" class="cam_button">Down</button>
+
+        <div id="cam_control_textinput">              
+            <table>
+                <tr>
+                    <td>Horizontal</td>
+                    <td><input id="cam_hor" autocomplete="off" value="0"/></td>
+                </tr>
+                <tr>
+                    <td>Vertical</td>
+                    <td><input id="cam_ver" autocomplete="off" value="0"/></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="debug_console" class="container">
+        <ul id="messages"></ul>
+        <form id="debug_console_form" action="log">
+            <input id="m" autocomplete="off" />
+            <button>Send</button>
+        </form>
+    </div>
+</body>
+
 </html>
