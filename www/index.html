@@ -26,7 +26,7 @@
       console.log('Setting up socket connections:');
 
       $('#messages').append($('<li>').text(location.hostname));
-        $('#messages').append($('<li>').text('Setting up socket connections:'));
+      $('#messages').append($('<li>').text('Setting up socket connections:'));
       // On connection the 'robots' event is emitted
       // and returns a list of available robots.
       cylon.on('robots', function(robots) {
@@ -94,7 +94,11 @@
       // and trigger the listener we defined above.
       cylon.emit('robots');
       $('form').submit(function(){
-        robot.emit($('#m').val(), 'some data');
+        
+        var str = $('#m').val();
+        var res = str.split(" ");
+
+        robot.emit(res[0], res[1], res[2]);
         $('#m').val('');
         return false;
       });
