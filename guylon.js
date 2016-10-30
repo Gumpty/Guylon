@@ -25,14 +25,14 @@ Cylon.robot({
     },
 
     devices: {
-        motor: { driver: 'motor', pin: 32 },
-        motor2: { driver: 'motor', pin: 33 }
+        //motor: { driver: 'motor', pin: 32 },
+        //motor2: { driver: 'motor', pin: 33 }
     },
 
     work: function () {
         try {
-            this.motor.turnOff();
-            this.motor2.turnOff();
+            //this.motor.turnOff();
+            //this.motor2.turnOff();
         }
         catch (err) {
             console.log(err);
@@ -41,7 +41,7 @@ Cylon.robot({
 
     turnOn: function () {
         try {
-            this.motor.turnOn();
+            //this.motor.turnOn();
             console.log('turned on!');
             this.emit('turned_on', { data: 'turned_on data' });
         }
@@ -52,7 +52,7 @@ Cylon.robot({
 
     turnOff: function () {
         try {
-            this.motor.turnOff();
+            //this.motor.turnOff();
             console.log('turned off!');
             this.emit('turned_off', { data: 'turned_off data' });
         }
@@ -71,7 +71,13 @@ Cylon.robot({
     },
     
     echo: function (payload) {
-      return payload + " received!";  
+        try {
+            console.log(payload + " received!")
+            return payload + " received!";
+        }
+        catch (err) {
+            console.log(err);
+        }  
     }
 });
 

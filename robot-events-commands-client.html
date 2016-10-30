@@ -76,7 +76,7 @@
         */
 
         // Connect to the main api socket
-        cylon = io('http://192.168.1.5:3000/api');
+        cylon = io('http://192.168.43.246:3000/api');
         console.log('Setting up socket connections:');
 
         // Send the api a 'robots' to receive the list of robots
@@ -95,7 +95,7 @@
 
                 // Once we have a list of available robots we can use
                 // any of them and connect to their socket.
-                robot = io('http://192.168.1.5:3000/api/robots/' + robots[0]);
+                robot = io('http://192.168.43.246:3000/api/robots/' + robots[0]);
 
                 // Listen to the 'message' event on device
                 robot.on('loopback', function(msg) {
@@ -164,7 +164,7 @@
                 $('#messages').append($('<li>').text(input));
 
                 if (robot) {
-                    robot.emit(input, 'some data');
+                    robot.emit(input);
                 }
 
                 $('#m').val('');
@@ -214,7 +214,7 @@
 
 <body>
     First!
-    <img src="http://192.168.1.5:8080/?action=stream"/>
+    <img src="http://192.168.43.246:8080/?action=stream"/>
     <div id="cam_control" class="container">
         <button id="cam_left" class="cam_button">Left</button>
         <button id="cam_right" class="cam_button">Right</button>
